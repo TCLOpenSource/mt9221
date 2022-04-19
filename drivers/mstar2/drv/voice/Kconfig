@@ -1,0 +1,32 @@
+menuconfig MSTAR_VOICE
+	tristate "Voice driver"
+	select SOUND
+	select SND
+	select SND_SOC
+	select SND_PCM
+#	select SND_HWDEP
+	help
+	  Say Y or M if you want to add support for
+	  the cleveland Voice driver.
+
+if MSTAR_VOICE
+	  
+config MSTAR_VOICE_DRIVER_DRV
+  tristate "cm4 voice support - DRV layer"
+  default y
+  help
+		MStar ALSA Voice Driver - DRV Layer.
+
+config MSTAR_VOICE_DRIVER_HAL
+  tristate "cm4 voice support - HAL layer"
+    default y
+  depends on MSTAR_VOICE_DRIVER_DRV
+  help
+	  MStar ALSA Voice Driver - DRV Layer.
+
+config MSTAR_VOICE_MMAP_BUF
+  bool "MMAP buffer allocation"
+  default n
+  help
+		Enable MMAP buffer support.
+endif #MSTAR_VOICE

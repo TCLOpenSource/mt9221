@@ -1,0 +1,3 @@
+# add the symlinks to init.mkn.rc
+on post-fs
+    mkdir /dev

@@ -1,0 +1,1 @@
+increase Antutu6 3d performance by return fake MemTotal when cat /proc/meminfo

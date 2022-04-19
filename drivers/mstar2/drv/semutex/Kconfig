@@ -1,0 +1,8 @@
+config MSTAR_SEMUTEX
+
+tristate "SEMUTEX"
+
+help
+    MStar MsOS driver function
+default y
+

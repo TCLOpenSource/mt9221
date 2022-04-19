@@ -1,0 +1,17 @@
+config SUPPORT_TCH
+bool "Support TCH Vision"
+default n
+help
+    enable TCH vision
+
+config MSTAR_XC_TCH_HDR_1_3_0
+bool "XC TCH HDR Support 1_3_0"
+default n
+help
+    enable MStar XC TCH HDR Support 1_3_0
+
+config MSTAR_XC_TCH_HDR_1_4_3
+bool "XC TCH HDR Support 1_4_3"
+default n
+help
+    enable MStar XC TCH HDR Support 1_4_3

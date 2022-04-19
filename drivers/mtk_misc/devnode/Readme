@@ -1,0 +1,33 @@
+A kernel module that boradcast dev uevents
+
+# How to build
+
+## Prepare
+
+1. Run the following command to generate dev.inc, ueventd.dev.rc and
+   init.dev.rc from dev.txt
+
+        % python gen_dev.py
+
+2. Merge ueventd.dev.rc to android ueventd.rc.
+
+3. Merge init.dev.rc to android init.rc
+
+## Build
+
+    make
+
+## Options
+
+Example: insmod /vendor/lib/modules/devnode.ko debug=0 limit=256 msleep=20
+
+* debug:    default: 0
+    could be 1(print debug log)
+
+* limit:    default: 256
+    Limit the numbers of broadcast uevent numbers. It should be power of 2 and
+    less than 400. If 'limit' is too large, some uevents will be dropped by
+    ueventd.
+
+* msleep:   default 200
+    Pause 'msleep' ms when reaching the uevent number limit.

@@ -1,0 +1,25 @@
+config MSTAR_GPIO
+
+tristate "GPIO"
+depends on GPIOLIB
+help
+    MStar GPIO driver function
+
+config MSTAR_GPIO_SUSPEND
+tristate "GPIO_SUSPEND"
+depends on MSTAR_GPIO
+default n
+help
+    enable MStar GPIO suspend
+
+menu "GPIO_Interrupt"
+choice
+	prompt "Interrupt"
+	default NON_INTERRUPT
+config NON_INTERRUPT
+ bool "no-interrupt"
+config EXT_INTERRUPT_SUPPORT
+	bool "ext-gpio-interrupt"
+
+endchoice
+endmenu

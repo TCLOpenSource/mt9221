@@ -1,0 +1,8 @@
+config MSTAR_IIC
+
+tristate "SWIIC"
+select MSTAR_GPIO
+#select MSTAR_HW_SEM
+help
+    MStar IIC driver function
+

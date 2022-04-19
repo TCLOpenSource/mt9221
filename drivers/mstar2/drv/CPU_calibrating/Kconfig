@@ -1,0 +1,22 @@
+config MSTAR_DVFS_DEBUG
+    bool "Mstar DVFS engine debug"
+    depends on MSTAR_DVFS
+    default y
+
+choice
+	prompt "Mstar CPU calibrating"
+	default MSTAR_CPU_CALIBRATING_NONE
+    depends on CPU_FREQ
+
+config MSTAR_CPU_CALIBRATING_NONE
+    bool "None"
+
+config MSTAR_CPU_CLUSTER_CALIBRATING
+    bool "Mstar CPU cluster calibrating"
+    depends on CPU_FREQ
+    default n
+    help
+      MStar CPU cluster calibrating driver function. If you need to
+      set multi-cluster CPUs frequency, you can use this option.
+      For example : big.LITTLE CPU, two clusters CPU frequency.
+endchoice

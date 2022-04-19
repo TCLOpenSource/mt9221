@@ -1,0 +1,5 @@
+config MSTAR_HDMITX4VX1
+tristate "MSTAR_HDMITX4VX1"
+default n
+help
+    enable MStar Vx1 to HDMITX driver.

@@ -1,0 +1,9 @@
+config MSTAR_RTC
+
+tristate "RTC"
+#depends on WATCHDOG
+default y
+select RTC_CLASS
+help
+    MStar RTC driver function
+

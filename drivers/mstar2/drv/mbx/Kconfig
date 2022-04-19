@@ -1,0 +1,19 @@
+config MSTAR_MBX
+tristate "MBX"
+default y
+help
+    enable MStar MBX driver.
+
+config MSTAR_MBX_GROUP_PATH
+tristate "MBX_GROUP"
+depends on MSTAR_MBX
+default n
+help
+    enable MStar MBX group patch
+
+config MSTAR_MBX_ASYNC_NOTIFIER_SIZE
+int "MBX async notifier size"
+depends on MSTAR_MBX
+default 30
+help
+    define MBX async notifier size (max size is 255)

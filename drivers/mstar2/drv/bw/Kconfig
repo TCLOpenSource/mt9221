@@ -1,0 +1,8 @@
+config MTK_MIU_BW
+    tristate "Mediatek DTV SoCs Bandwidth"
+    default y
+    help
+      This driver, memory interface unit protection, is for the Memory
+      Controller module in MediaTek SoCs, mainly help enable/disable
+      memory protect unit. This controller is used to handle kernel
+      memory protect merge and split to let others module use memory.

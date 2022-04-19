@@ -1,0 +1,4 @@
+On murphy platform, miu1 bw is limited, if HIGHUSER flag is given to system heap,
+kernel alloc_page will give ion system heap page as more high address page as it can.
+on platform such as murphy, we could disable CONFIG_MP_ION_PATCH_ALLOC_HIGHUSER_PAGES
+to make use of miu0 memory.

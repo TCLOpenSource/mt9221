@@ -1,0 +1,43 @@
+config MSTAR_XC
+tristate "MSTAR_XC"
+default n
+help
+    enable MStar smart card driver.
+
+
+config MSTAR_FRC_SOFTWARE_TOGGLE
+tristate "FRC software interrupt toggle"
+default n
+help
+    enable MStar FRC software interrupt toggle.
+
+
+config MSTAR_XC_HDR_SUPPORT
+bool "XC HDR Support"
+default n
+help
+    enable MStar XC HDR Support
+
+config MSTAR_XC_DoVi_HDR_SUPPORT
+bool "XC Dolby HDR Support"
+default n
+help
+    enable MStar XC Dolby HDR Support
+
+config MSTAR_DISABLE_DV
+bool "Disable Dolby Vision"
+default n
+help
+    disable dolby vision
+
+config MSTAR_XC_SET_PQBINPATH
+bool "XC SET PQBINPATH"
+default n
+help
+    enable MStar XC SET PQBINPATH
+
+config MSTAR_XC_SUPPORT_HSY
+bool "XC SUPPORT HSY"
+default n
+help
+    enable MSTAR_XC_SUPPORT_HSY

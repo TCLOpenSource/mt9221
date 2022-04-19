@@ -1,0 +1,51 @@
+config MTK_FUSION
+	tristate "Fusion"
+	---help---
+	  Fusion is the IPC API used by DirectFB and FusionSound.
+config NATIVE_CB2
+	bool "callback mechanism in native"     
+      
+config HAS_WAKELOCK
+	bool
+	default y
+
+config HAS_EARLYSUSPEND
+	bool
+	default n
+
+config WAKELOCK
+	bool "Android's method of preventing suspend"
+	default y
+	---help---
+	  This allows applications to prevent the CPU from suspending while
+	  they need it.
+
+	  Say Y if you are running an android userspace.
+
+config EARLYSUSPEND
+	bool "Early suspend"
+	depends on WAKELOCK
+	default n
+	select HAS_EARLYSUSPEND
+	---help---
+	  Call early suspend handlers when the user requested sleep state
+	  changes.
+
+
+config FB_EARLYSUSPEND
+	bool "FB Early suspend"
+	depends on EARLYSUSPEND
+	default n
+	select HAS_EARLYSUSPEND
+	---help---
+	  Call early suspend handlers when the user requested sleep state
+	  changes.
+
+config MTK_WIFI
+	tristate "MTK_WIFI"
+	select WEXT_PRIV
+	select WIRELESS_EXT
+	select CFG80211_INTERNAL_REGDB
+	---help---
+	  You'd better turn on it when you want to use iwpriv
+

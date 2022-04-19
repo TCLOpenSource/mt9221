@@ -1,0 +1,18 @@
+config MMA_MPU_PATCH
+	bool  "MMA MPU PATCH"
+	depends on MP_MMA_ENABLE
+	default n
+	help
+		mma mpu patch for mmap not ready
+config MP_MMA_CMA_ENABLE
+        bool  "MP MMA CMA ENABLE"
+        depends on MP_MMA_ENABLE
+        default n
+        help
+                mp mma cma enable
+config MP_IOMMU_DISCRETE_CMA
+        bool  "MP IOMMU DISCRETE CMA ENABLE"
+        depends on MP_MMA_ENABLE
+        default n
+        help
+                mp iommu discrete cma enable

@@ -1,0 +1,6 @@
+config MTKTV_CPU_THERMAL
+    tristate "MTKTV CPU THERMAL"
+    depends on THERMAL
+    default n
+    help
+        MTKTV CPU THERMAL CONTROL

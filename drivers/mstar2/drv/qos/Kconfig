@@ -1,0 +1,5 @@
+config MP_QOS
+    tristate "CPUQoS v1.0 for TV"
+    default n
+    help
+      CPU QoS v1.0 for dynamic feature control

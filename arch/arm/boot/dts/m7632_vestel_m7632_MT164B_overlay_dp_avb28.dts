@@ -1,0 +1,39 @@
+/dts-v1/;
+/plugin/;
+/include/ "overlay_avb_SysAsRoot.dtsi"
+
+/ {
+    fragment@1 {
+    target = <&power_info>;
+    __overlay__ {
+            type = "gpio";
+            parm {
+                level = <4>;
+                control_0 {
+                    vol = <95>;
+                    num = <2>;
+                    gpio_num = <51 52>;
+                    gpio_mode = <0 0>;
+                };
+                control_1 {
+                    vol = <100>;
+                    num = <2>;
+                    gpio_num = <51 52>;
+                    gpio_mode = <0 1>;
+                };
+                control_2 {
+                    vol = <110>;
+                    num = <2>;
+                    gpio_num = <51 52>;
+                    gpio_mode = <1 0>;
+                };
+                control_3 {
+                    vol = <115>;
+                    num = <2>;
+                    gpio_num = <51 52>;
+                    gpio_mode = <1 1>;
+                };
+            };
+        };
+    };
+};

@@ -1,0 +1,8 @@
+config MSTAR_UTOPIA2K_STR
+
+tristate "UTOPIA2K_STR"
+depends on MP_MSTAR_STR_BASE
+default n
+select APM_EMULATION
+help
+    MStar Utopia2K STR driver function

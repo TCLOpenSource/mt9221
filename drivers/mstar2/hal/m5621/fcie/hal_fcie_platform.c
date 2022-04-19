@@ -1,0 +1,1157 @@
+/* SPDX-License-Identifier: GPL-2.0-only OR BSD-3-Clause */
+/******************************************************************************
+ *
+ * This file is provided under a dual license.  When you use or
+ * distribute this software, you may choose to be licensed under
+ * version 2 of the GNU General Public License ("GPLv2 License")
+ * or BSD License.
+ *
+ * GPLv2 License
+ *
+ * Copyright(C) 2019 MediaTek Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of version 2 of the GNU General Public License as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
+ *
+ * BSD LICENSE
+ *
+ * Copyright(C) 2019 MediaTek Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ *  * Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *  * Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *****************************************************************************/
+
+// this file is use only for maxim project 2016.5.10
+
+//#include <config.h>
+//#include "drvFCIE_config.h"
+
+
+//#include <common.h>
+//#include <stdio.h>
+//#include <mmc.h>
+//#include "drvFCIE5.h"
+#include <linux/string.h> // memcpy
+#include <linux/delay.h> // udelay mdelay
+#include <linux/sched.h> // DECLARE_WAIT_QUEUE_HEAD & wait_event_timeout() & TASK_NORMAL
+struct mmc_host;
+#include "hal_fcie.h"
+#ifdef CONFIG_MSTAR_CLKM
+#include "linux/clkm.h"
+#endif
+extern unsigned char sd_ddr_mode;
+extern void HalFcie_DumpDebugBus(void);
+extern unsigned char gu8FcieSilenceTuning;
+int SdPadMode;
+
+/**************************************
+* Config definition
+**************************************/
+#define DBG_CR_CLK(MSG)             //MSG
+#define DBG_CR_PAD(MSG)             //MSG
+
+/**************************************
+* Local function definition
+**************************************/
+void HalFcieDelayUs(U32 u32Us);
+
+
+/**************************************
+* Global function definition
+**************************************/
+void HalFcie_ResetIP(void)
+{
+	U16 u16Reg, u16Cnt;
+
+	FCIE_RIU_W16(FCIE_SD_CTRL, 0); // clear job start for safety
+
+	//printk(LIGHT_CYAN"fcie reset\n"NONE);
+
+	FCIE_RIU_W16(FCIE_MIE_FUNC_CTL, BIT_SD_EN);
+
+	FCIE_RIU_16_OF(FCIE_RST, BIT_FCIE_SOFT_RST_n); /* active low */
+
+	// FCIE reset - wait
+	u16Cnt=0;
+
+	do
+	{
+		u16Reg = FCIE_RIU_R16(FCIE_RST);
+
+		HalFcieDelayUs(1);
+
+		if(0x1000 == u16Cnt++)
+		{
+			printk("SD Err: FCIE Reset fail!! FCIE_RST = %04Xh\n", u16Reg);
+		//	while(1);
+		}
+
+	} while (BIT_RST_STS_MASK  != (u16Reg  & BIT_RST_STS_MASK));
+
+	FCIE_RIU_16_ON(FCIE_RST, BIT_FCIE_SOFT_RST_n);
+
+	u16Cnt=0;
+
+	do
+	{
+		u16Reg = FCIE_RIU_R16(FCIE_RST);
+		//printk("FCIE_RST = %04Xh\n", u16Reg);
+
+		if(0x1000 == u16Cnt++)
+		{
+			printk("SD Err: FCIE Reset fail2:h \n");
+			return ;
+		}
+
+		HalFcieDelayUs(1);
+
+
+	} while (0  != (u16Reg  & BIT_RST_STS_MASK));
+
+	//printk("ok\n");
+
+}
+
+/*U32 HalFcie_TranslateVirtAddr(U32 u32_DMAAddr, U32 u32_ByteCnt)
+{
+	//flush_cache(u32_DMAAddr, u32_ByteCnt);
+	#ifdef CONFIG_MCU_ARM
+
+	//printk("MIU0[%Xh], MIU1[%Xh]\n", CONFIG_MIU0_BUSADDR, CONFIG_MIU1_BUSADDR);
+	if(u32_DMAAddr < CONFIG_MIU1_BUSADDR) // MIU0
+	{
+		//FCIE_RIU_16_OF(FCIE_MIU_DMA_26_16, BIT_MIU1_SELECT);
+		return  (u32_DMAAddr - CONFIG_MIU0_BUSADDR);
+	}
+	else
+	{
+		// FCIE_RIU_16_ON(FCIE_MIU_DMA_26_16, BIT_MIU1_SELECT);
+		printk("MIU1\n");
+		return  (u32_DMAAddr - CONFIG_MIU1_BUSADDR);
+	}
+	#endif
+
+	return 0;
+}*/
+
+void HalFcie_Platform_InitChiptop(void)
+{
+	FCIE_RIU_16_OF(CHIPTOP_50h, REG_ALL_PAD_IN);
+	FCIE_RIU_16_OF(CHIPTOP_6Eh, BIT06); // clear emmc_config
+	FCIE_RIU_16_OF(CHIPTOP_1Dh, BIT08|BIT09); // clear emmc_config
+	FCIE_RIU_16_OF(CHIPTOP_57h, BIT10|BIT11); // clear SD2 PAD
+	FCIE_RIU_16_OF(CHIPTOP_50h, BIT00|BIT01|BIT02);  //clr NAND mode
+	FCIE_RIU_16_OF(CHIPTOP_11h, BIT12|BIT13|BIT14);  //clr SD PAD
+
+
+	if(SdPadMode==1)
+	{
+		FCIE_RIU_16_ON(CHIPTOP_0Bh, BIT01|BIT02|BIT03|BIT04);
+		FCIE_RIU_16_ON(CHIPTOP_0Dh, BIT02|BIT04); 		
+		FCIE_RIU_16_ON(CHIPTOP_11h, BIT12);  //sd config mode 1
+	}
+	else if(SdPadMode==2)
+	{
+		
+		FCIE_RIU_16_ON(CHIPTOP_0Ch, BIT00|BIT01|BIT02|BIT03);
+		FCIE_RIU_16_ON(CHIPTOP_0Dh, BIT02|BIT04); 		
+		FCIE_RIU_16_ON(CHIPTOP_11h, BIT13);  //sd config mode 2
+	}
+	else if(SdPadMode==3)
+	{
+	
+		FCIE_RIU_16_ON(CHIPTOP_0Bh, BIT01|BIT02|BIT03|BIT04);
+		FCIE_RIU_16_ON(CHIPTOP_11h, BIT12|BIT13);  //sd config mode 3
+	}
+	else if(SdPadMode==4)
+	{
+		
+		FCIE_RIU_16_ON(CHIPTOP_0Dh, BIT02|BIT05); 		
+		FCIE_RIU_16_ON(CHIPTOP_11h, BIT14);  //sd config mode 4
+	}
+	
+	else if(SdPadMode==5)
+	{
+	
+		FCIE_RIU_16_ON(CHIPTOP_0Bh, BIT01|BIT02|BIT03|BIT04);		
+		FCIE_RIU_16_OF(CHIPTOP_0Dh, BIT03|BIT05); 		
+		FCIE_RIU_16_ON(CHIPTOP_57h, BIT10);  //sd config mode 5
+	}
+	
+	else if(SdPadMode==6)
+	{
+	
+		FCIE_RIU_16_ON(CHIPTOP_0Ch, BIT00|BIT01|BIT02|BIT03);
+		FCIE_RIU_16_OF(CHIPTOP_0Dh, BIT03|BIT05); 		
+		FCIE_RIU_16_ON(CHIPTOP_57h, BIT11);  //sd config mode 6
+	}
+	
+	else if(SdPadMode==7)
+	{
+	
+		FCIE_RIU_16_ON(CHIPTOP_0Ch, BIT00|BIT01|BIT02|BIT03);
+		
+		FCIE_RIU_16_ON(CHIPTOP_11h, BIT13);  //sd config mode 2
+		FCIE_RIU_16_ON(CHIPTOP_1Dh, BIT09);  //sd ECO PAD
+
+		FCIE_RIU_16_ON(EMMC_PLL_47h,BIT08|BIT10);
+		
+		FCIE_RIU_16_ON(EMMC_PLL_49h,BIT08);		
+		FCIE_RIU_16_OF(EMMC_PLL_49h,BIT10);
+		
+		FCIE_RIU_W16(REG_TX_BYPASS_EN, 0xFFFF);
+		FCIE_RIU_W16(REG_RX_BYPASS_EN, 0xFFFF);
+	}
+	else
+	{
+		printk(LIGHT_RED"SdErr: wrong parameter for SdPadMode %d!\n"NONE, SdPadMode);
+	}
+
+	// EMMC_PLL
+	FCIE_RIU_16_OF(EMMC_PLL_68h, REG_EMMC_EN|REG_EMMC_DDR_EN);
+	FCIE_RIU_16_OF(EMMC_PLL_6Dh, REG_DDR_IO_MODE);
+	FCIE_RIU_16_OF(EMMC_PLL_70h, REG_SEL_32BIT_IF);
+
+	// MIU select by FCIE
+	FCIE_RIU_16_ON(MIU2_79, BIT04);
+
+}
+
+
+#if !defined FPGA_BOARD || FPGA_BOARD==0
+
+const U8 FcieClockIdxNum = 7;
+
+const U32 FCIE_CLOCK[] =
+{
+    48000, //  0
+    43200, //  1
+    40000, //  2
+    36000, //  3
+    32000, //  4
+    20000, //  5
+    12000, //  6
+      300, //  7
+};
+
+// find clock close to target but not over
+
+U32 HalFcie_SetClock(U32 u32Clock)
+{
+	U8 u8ClockSlector;
+	/*static U32 u32_OldClock=0xFFFFFFFF;
+
+	//printk("HalFcie_SetClock(%ld)\n", u32Clock);
+
+	if(u32_OldClock == u32Clock)
+		return 0;
+	else
+		u32_OldClock = u32Clock;*/
+
+	//if((FCIE_RIU_R16(REG_CLK_FCIE_SYN)&CLK_SRC_MASK)!=CLK_SRC_432MHZ)
+	//{
+	//	printk("SdErr: reg_ckg_fcie_syn is not 432MHz\n");
+	//}
+
+    FCIE_RIU_16_ON(REG_CLK_SDIO, BIT08); 
+    FCIE_RIU_16_OF(REG_CLK_SDIO, BIT09); // 432Mhz
+
+#ifdef CONFIG_MSTAR_CLKM
+	S32 fcie_clk, fcie_gate;
+
+	fcie_clk = get_handle("g_clk_nfie_p");
+	fcie_gate = get_handle("g_clk_nfie");
+
+	set_clk_source(fcie_gate, "g_nfie_clk_xtal"); // clock gated
+#else
+    FCIE_RIU_16_ON(REG_CLK_SDIO, BIT00); // turn on clock gating
+#endif
+
+	if(u32Clock>1000)
+	{
+		DBG_CR_CLK(printk("Set SDIO clock as %d.%d MHz, ", u32Clock/1000, (u32Clock%1000)/100 ) );
+	}
+	else
+	{
+		DBG_CR_CLK(printk("Set SDIO clock as %d KHz, ", u32Clock));
+	}
+
+	for(u8ClockSlector=0; u8ClockSlector<=FcieClockIdxNum; u8ClockSlector++)
+	{
+		if( FCIE_CLOCK[u8ClockSlector] <= u32Clock )
+		{
+			break;
+		}
+	}
+
+	if(u8ClockSlector>FcieClockIdxNum)
+	{
+		DBG_CR_CLK(printk("Error!!! Can not find proper clock!\r\n"));
+		//while(1);
+		return 0x01;
+	}
+
+	if(u32Clock>1000)
+	{
+		DBG_CR_CLK(printk("select SDIO clock as %d.%d MHz\r\n", FCIE_CLOCK[u8ClockSlector]/1000, (FCIE_CLOCK[u8ClockSlector]%1000)/100));
+	}
+	else
+	{
+		DBG_CR_CLK(printk("select SDIO clock as %d KHz\r\n", FCIE_CLOCK[u8ClockSlector]));
+	}
+
+	#ifndef CONFIG_MSTAR_CLKM
+	    FCIE_RIU_16_ON(REG_CLK_SDIO, BIT06);
+    	FCIE_RIU_16_OF(REG_CLK_SDIO, BIT05+BIT04+BIT03+BIT02); // mask all clock select
+	#endif
+
+	//printk("switch to clock: %d\n", u8ClockSlector);
+
+    switch(u8ClockSlector)
+    {
+		case 0: // 48M
+			#ifdef CONFIG_MSTAR_CLKM
+				set_clk_source(fcie_clk, "g_nfie_clk_48");
+			#else
+				FCIE_RIU_16_ON(REG_CLK_SDIO, 0xF<<2);
+			#endif
+			break;
+
+		case 1: // 43.2M
+			#ifdef CONFIG_MSTAR_CLKM
+				set_clk_source(fcie_clk, "g_nfie_clk_43");
+			#else
+				FCIE_RIU_16_ON(REG_CLK_SDIO, 0x5<<2);
+			#endif
+			break;
+
+		case 2: // 40M
+			#ifdef CONFIG_MSTAR_CLKM
+				set_clk_source(fcie_clk, "g_nfie_clk_40");
+			#else
+				FCIE_RIU_16_ON(REG_CLK_SDIO, 0x4<<2);
+			#endif
+			break;
+
+		case 3: // 36M
+			#ifdef CONFIG_MSTAR_CLKM
+				set_clk_source(fcie_clk, "g_nfie_clk_36");
+			#else
+		    	FCIE_RIU_16_ON(REG_CLK_SDIO, 0x3<<2);
+		    #endif
+			break;
+
+		case 4: // 32M
+			#ifdef CONFIG_MSTAR_CLKM
+				set_clk_source(fcie_clk, "g_nfie_clk_32");
+			#else
+			    FCIE_RIU_16_ON(REG_CLK_SDIO, 0x2<<2);
+			#endif
+			break;
+
+		case 5: // 20M
+			#ifdef CONFIG_MSTAR_CLKM
+				set_clk_source(fcie_clk, "g_nfie_clk_20");
+			#else
+		    	FCIE_RIU_16_ON(REG_CLK_SDIO, 0x1<<2);
+			#endif
+			break;
+
+		case 6: // 12M
+			#ifdef CONFIG_MSTAR_CLKM
+				set_clk_source(fcie_clk, "g_nfie_clk_xtal");
+			#else
+		    	FCIE_RIU_16_ON(REG_CLK_SDIO, 0xE<<2);
+			#endif
+			break;
+
+		case 7: // 300K
+			#ifdef CONFIG_MSTAR_CLKM
+				set_clk_source(fcie_clk, "g_nfie_clk_300k");
+			#else
+				FCIE_RIU_16_ON(REG_CLK_SDIO, 0xD<<2);
+			#endif
+			break;
+
+		default:
+			printk("FCIE Err: wrong clock selector!\n");
+//			while(1);
+			break;
+
+	}
+
+	DBG_CR_CLK(printk("REG_CLK_SDIO = 0x%04X\r\n", FCIE_RIU_R16(REG_CLK_SDIO)));
+
+	#ifdef CONFIG_MSTAR_CLKM
+		set_clk_source(fcie_gate, "g_nfie_clk_p"); // clock enable
+	#else
+		FCIE_RIU_16_OF(REG_CLK_SDIO, BIT00); // turn off clock gating
+	#endif
+
+	return FCIE_CLOCK[u8ClockSlector];
+
+}
+
+//static U32 gu32SdClock = 0;
+
+#define BUS_SPEED_SDR12		1
+#define BUS_SPEED_SDR25		2
+#define BUS_SPEED_DDR50		3
+#define BUS_SPEED_SDR50		4
+#define BUS_SPEED_SDR104	5
+
+//static U32 gu8BusSpeed = BUS_SPEED_SDR12;
+
+#else
+
+U8 HalFcie_SetSdioClock(U32 u32Clock)
+{
+	if (u32Clock < 400)
+	{
+		printk("SDIO FPGA clock 187.5KHz\n");
+		FCIE_RIU_16_ON(R_SDIO_PLL_0x1D, BIT00);
+	}
+	else
+	{
+		printk("SDIO FPGA clock 1.5MHz\n");
+		FCIE_RIU_16_OF(R_SDIO_PLL_0x1D, BIT00);
+	}
+	FCIE_RIU_16_ON(FCIE_SD_MODE, BIT_CLK_EN); // enable clk
+
+	return 0;
+}
+
+#endif
+
+static U8 u8CurrentPadType = SDIO_MODE_UNKNOWN;
+
+U8 HalFcie_GetPadType(void)
+{
+	return u8CurrentPadType;
+}
+
+void HalFcie_SwitchPad(unsigned char u32Mode)
+{
+	//printk("switch pad %d, current pad type = %d\n", u32Mode, u8CurrentPadType);
+
+	// chiptop
+	HalFcie_Platform_InitChiptop();
+
+	// sdio
+	FCIE_RIU_16_OF(FCIE_DDR_MODE, BIT_FALL_LATCH|BIT_PAD_IN_SEL_SD|BIT_32BIT_MACRO_EN|BIT_DDR_EN|BIT_8BIT_MACRO_EN);
+
+	// clear nand enable, otherwise fcie fail in data transfer
+	FCIE_RIU_16_OF(FCIE_NC_FUNC_CTL, BIT_NC_EN);
+
+	switch(u32Mode)
+	{
+		///////////////////////////////////////////////////////////////////////////////////////////
+		case SDIO_MODE_GPIO_PAD_BPS:
+			DBG_CR_PAD(printk(LIGHT_CYAN"SDIO_MODE_GPIO_PAD_BPS\n"NONE));
+			u8CurrentPadType = SDIO_MODE_GPIO_PAD_BPS;
+			break;
+
+		///////////////////////////////////////////////////////////////////////////////////////////
+		case SDIO_MODE_GPIO_PAD_SDR:
+			DBG_CR_PAD(printk(LIGHT_CYAN"SDIO_MODE_GPIO_PAD_SDR\n"NONE));
+			u8CurrentPadType = SDIO_MODE_GPIO_PAD_SDR;
+			FCIE_RIU_16_ON(FCIE_DDR_MODE, BIT_FALL_LATCH|BIT_PAD_IN_SEL_SD);
+			FCIE_RIU_16_ON(FCIE_DDR_MODE, BIT_FEEDBACK_CLK2);
+			break;
+
+		default:
+			u8CurrentPadType = SDIO_MODE_UNKNOWN;
+			DBG_CR_PAD(printk(LIGHT_CYAN"SdErr: wrong parameter for switch pad func\n"NONE));
+		//		while(1);
+			//return 0x01;
+			break;
+	}
+
+
+	//return 0x00;
+
+//ErrorHandle:
+
+	//printk("SDIO Err: set bus width before pad switch\n");
+	//return 0x02;
+
+}
+
+
+U8 HalFcie_Platform_ClearEvent(U16 nReq)
+{
+	U16 u16Tmp;
+
+	u16Tmp = 0x0080;
+	while((FCIE_RIU_R16(FCIE_MIE_EVENT)& nReq) != 0x00)
+	{
+		FCIE_RIU_W16(FCIE_MIE_EVENT, nReq); // write 1 clear register
+		if (u16Tmp==0)
+		{
+			printk("Error!!! Can not clear MIE event.\r\n");
+			return(1);
+		}
+		else
+		{
+			u16Tmp--;
+		}
+	}
+
+	return 0;
+}
+
+#if defined(ENABLE_FCIE_INTERRUPT_MODE)&&ENABLE_FCIE_INTERRUPT_MODE
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+static DECLARE_WAIT_QUEUE_HEAD(fcie_mie_wait);
+
+static volatile U16 fcie_event;
+
+typedef enum
+{
+	IRQ_TYPE_NONE	= 0,
+	IRQ_TYPE_EVENT	= 1,
+	IRQ_TYPE_D1INT	= 2,
+
+} E_IRQ_TYPE;
+
+
+void HalFcie_ClearWaitQueue(void)
+{
+	fcie_event = 0;
+}
+
+E_IRQ_TYPE HalFcie_SaveMieEvent(struct mmc_host *host)
+{
+
+	//U16 u16Reg = FCIE_RIU_R16(FCIE_MIE_EVENT);
+
+#if defined SDIO_D1_INTR_MODE && SDIO_D1_INTR_MODE
+
+	if(u16Reg & BIT_SDIO_INT)
+	{
+		mmc_signal_sdio_irq(host);
+		FCIE_RIU_W16(FCIE_MIE_EVENT, BIT_SDIO_INT); // W1C event
+		return IRQ_TYPE_D1INT;
+	}
+	else
+
+#endif
+
+	{
+		//fcie_event |= u16Reg; // summary all mie event
+
+		fcie_event = FCIE_RIU_R16(FCIE_MIE_EVENT) & FCIE_RIU_R16(FCIE_MIE_INT_EN);
+
+		if(fcie_event & BIT_DMA_END)
+		{
+			FCIE_RIU_16_OF(FCIE_MIE_INT_EN, BIT_DMA_END);
+		}
+
+		if(fcie_event & BIT_SD_CMD_END)
+		{
+			FCIE_RIU_16_OF(FCIE_MIE_INT_EN, BIT_SD_CMD_END);
+		}
+
+		if(fcie_event & BIT_BUSY_END_INT)
+		{
+			FCIE_RIU_16_OF(FCIE_MIE_INT_EN, BIT_BUSY_END_INT);
+		}
+
+		if(fcie_event & BIT_ERR_STS)
+		{
+			FCIE_RIU_16_OF(FCIE_MIE_INT_EN, BIT_ERR_STS);
+		}
+
+		return IRQ_TYPE_EVENT;
+	}
+
+	return IRQ_TYPE_NONE;
+
+}
+
+
+irqreturn_t HalFcie_KernelIrq(int irq, void *devid)
+{
+	irqreturn_t irq_t = IRQ_NONE;
+	struct mmc_host *host = devid;
+	E_IRQ_TYPE eIrqType;
+
+	//printk("FCIE IRQ EV_%04Xh, IE_%04Xh\n", FCIE_RIU_R16(FCIE_MIE_EVENT), FCIE_RIU_R16(FCIE_MIE_INT_EN));
+
+	if(FCIE_RIU_R16(FCIE_MIE_FUNC_CTL) & BIT_EMMC_ACTIVE)
+	{
+		return IRQ_NONE;
+	}
+
+	eIrqType = HalFcie_SaveMieEvent(host);
+
+	if(eIrqType ==IRQ_TYPE_EVENT)
+	{
+		wake_up(&fcie_mie_wait);
+		irq_t = IRQ_HANDLED;
+	}
+	else if(eIrqType ==IRQ_TYPE_D1INT) // no need to wake up wait queue head
+	{
+		irq_t = IRQ_HANDLED;
+	}
+
+	return irq_t;
+}
+
+E_IO_STS HalFcie_WaitMieEventPolling(U16 u16ReqVal, U32 u32WaitMs)
+{
+	U32 u32Count = 0;
+	//u32WaitMs *= 100;
+	U16 u16Event;
+
+	while(1)
+	{
+		u16Event = FCIE_RIU_R16(FCIE_MIE_EVENT);
+
+		if(u16Event&BIT_ERR_STS)
+		{
+			/*if(!gu8FcieSilenceTuning)
+			{
+				printk("\33[1;31mSDIO ErrDet, SD_STS = %04Xh\33[m\n", FCIE_RIU_R16(FCIE_SD_STATUS));
+			}*/
+			HalFcie_Platform_ClearEvent(BIT_ERR_STS);
+			return IO_ERROR_DETECT;
+		}
+		else if((u16Event&u16ReqVal)==u16ReqVal)
+		{
+			//printk("Got event %04X\n", u16Event);
+			break;
+		}
+
+		HalFcieDelayUs(1000);
+
+		u32Count++;
+
+		if(u32Count>u32WaitMs)
+		{
+			printk("\r\n");
+			printk("------------------------------------------\r\n");
+			printk("ERROR!!! MIE EVENT TIME OUT!!!\n");
+			printk("request event = %04Xh, event = %04Xh\n", u16ReqVal, u16Event);
+			printk("------------------------------------------\r\n");
+
+			if(!gu8FcieSilenceTuning)
+			{
+				HalFcie_DumpRegister();
+				HalFcie_DumpDebugBus();
+				//while(1);
+			}
+
+			return(IO_TIME_OUT);
+		}
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////
+	// Clear mie event
+	// Only can clear request value,
+	// because read operation might enable command and data transfer at the same time
+
+	if (HalFcie_Platform_ClearEvent(u16ReqVal))
+	{
+		return (IO_TIME_OUT);
+	}
+
+    return(IO_SUCCESS);
+}
+
+
+E_IO_STS HalFcie_WaitMieEvent(U16 u16ReqVal, U32 u32WaitMs)
+{
+	unsigned long timeout;
+
+	timeout = msecs_to_jiffies(u32WaitMs+10);
+
+	if(wait_event_timeout(fcie_mie_wait, (fcie_event==u16ReqVal) || (fcie_event&BIT_ERR_STS), timeout))
+	{
+		if(fcie_event&BIT_ERR_STS)
+		{
+			return IO_ERROR_DETECT;
+		}
+		return IO_SUCCESS;
+	}
+	else
+	{
+		if(HalFcie_WaitMieEventPolling(u16ReqVal, 2)) // try polling event
+		{
+			printk("wait fcie mie evnet timeout req %04Xh, event = %04Xh\n", u16ReqVal, fcie_event);
+			return IO_TIME_OUT;
+		}
+		else
+		{
+			printk("wait mie intr timeout but polling evnet %04Xh OK\n", u16ReqVal);
+			return IO_SUCCESS;
+		}
+	}
+}
+
+#else
+
+E_IO_STS HalFcie_WaitMieEvent(U16 u16ReqVal, U32 u32WaitMs)
+{
+	U32 u32Count = 0;
+	//u32WaitMs *= 100;
+	U16 u16Event;
+
+	while(1)
+	{
+		u16Event = FCIE_RIU_R16(FCIE_MIE_EVENT);
+
+		if(u16Event&BIT_ERR_STS)
+		{
+			/*if(!gu8FcieSilenceTuning)
+			{
+				printk("\33[1;31mSDIO ErrDet, SD_STS = %04Xh\33[m\n", FCIE_RIU_R16(FCIE_SD_STATUS));
+			}*/
+			HalFcie_Platform_ClearEvent(BIT_ERR_STS);
+			return IO_ERROR_DETECT;
+		}
+		else if((u16Event&u16ReqVal)==u16ReqVal)
+		{
+			//printk("Got event %04X\n", u16Event);
+			break;
+		}
+
+		HalFcieDelayUs(1000);
+
+		u32Count++;
+
+		if(u32Count>u32WaitMs)
+		{
+			printk("\r\n");
+			printk("------------------------------------------\r\n");
+			printk("ERROR!!! MIE EVENT TIME OUT!!!\n");
+			printk("request event = %04Xh, event = %04Xh\n", u16ReqVal, u16Event);
+			printk("------------------------------------------\r\n");
+
+			if(!gu8FcieSilenceTuning)
+			{
+				HalFcie_DumpRegister();
+				HalFcie_DumpDebugBus();
+				//while(1);
+			}
+
+			return(IO_TIME_OUT);
+		}
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////
+	// Clear mie event
+	// Only can clear request value,
+	// because read operation might enable command and data transfer at the same time
+
+	if (HalFcie_Platform_ClearEvent(u16ReqVal))
+	{
+		return (IO_TIME_OUT);
+	}
+
+	return(IO_SUCCESS);
+}
+
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HalFcie_SetVDD(U8 u8OnOff)
+{
+	// MST0995D always supply SD power in socket
+}
+
+#if 0
+void FCIE_HWTimer_Start(void)
+{
+	// reset HW timer
+	FCIE_RIU_W16(TIMER0_MAX_LOW, 0xFFFF);
+	FCIE_RIU_W16(TIMER0_MAX_HIGH, 0xFFFF);
+	FCIE_RIU_W16(TIMER0_ENABLE, 0);
+
+	// start HW timer
+	FCIE_RIU_16_ON(TIMER0_ENABLE, 0x0001);
+
+}
+
+U32 FCIE_HWTimer_End(void)
+{
+	U32 u32HWTimer = 0;
+	U16 u16TimerLow = 0;
+	U16 u16TimerHigh = 0;
+
+	// Get HW timer
+	u16TimerLow = FCIE_RIU_R16(TIMER0_CAP_LOW);
+	u16TimerHigh = FCIE_RIU_R16(TIMER0_CAP_HIGH);
+
+	u32HWTimer = (u16TimerHigh<<16) | u16TimerLow;
+
+	return u32HWTimer;
+}
+#endif
+
+extern void MsOS_DelayTaskUs_Poll(U32 u32Us); // MsOS.h
+extern void MsOS_DelayTaskUs(U32 u32Us);
+
+
+void HalFcieDelayUs(U32 u32Us)
+{
+	U32 u32_i, u32Ms;
+
+	if(u32Us<1000)
+	{
+		udelay(u32Us);
+	}
+	else
+	{
+		u32Ms = u32Us/1000;
+		for(u32_i=0; u32_i<u32Ms; u32_i++)
+			udelay(1000);
+	}
+}
+
+void HalFcieDelayMs(U32 u32Ms)
+{
+	U32 u32_i;
+
+	for(u32_i=0; u32_i<u32Ms; u32_i++)
+		udelay(1000);
+}
+
+#if 0
+
+void HalFcie_TimerEnable(void)
+{
+	// reset HW timer
+	FCIE_RIU_W16(TIMER1_MAX_LOW, 0xFFFF);
+	FCIE_RIU_W16(TIMER1_MAX_HIGH, 0xFFFF);
+	FCIE_RIU_W16(TIMER1_ENABLE, 0);
+
+	// start HW timer
+	FCIE_RIU_16_ON(TIMER1_ENABLE, 0x0001);
+
+	// 0xFFFFFFFF = 4,294,967,295 tick
+	// divide 12 --> 357,913,941 us --> 357 sec --> 6 min
+}
+
+
+U32 HalFcie_TimerGetTick(void)
+{
+	U32 u32HWTimer = 0;
+	U16 u16TimerLow = 0;
+	U16 u16TimerHigh = 0;
+
+	// Get HW timer
+	u16TimerLow = FCIE_RIU_R16(TIMER1_CAP_LOW);
+	u16TimerHigh = FCIE_RIU_R16(TIMER1_CAP_HIGH);
+
+	u32HWTimer = (u16TimerHigh<<16) | u16TimerLow;
+
+	return u32HWTimer;
+}
+
+// max: 357,913,941 = 0x15555555
+U32 HalFcie_TimerGetMicroSec(void)
+{
+	return (HalFcie_TimerGetTick()/12);
+}
+
+void HalFcie_TimerTest(void)
+{
+	unsigned int sec = 0;
+
+	HalFcie_TimerEnable();
+	printk("count to 3 then start test: ");
+	while(1)
+	{
+		if (HalFcie_TimerGetMicroSec() >= (1000000+sec*1000000))
+		{
+			printk("%d ", ++sec);
+		}
+		if(sec==3)
+		{
+			printk("Go!\n");
+			break;
+		}
+	}
+}
+
+static unsigned int tick_start;
+static unsigned int tick_stop;
+
+void HalFcie_TimerStart(void)
+{
+	HalFcie_TimerEnable();
+	tick_start = HalFcie_TimerGetTick();
+}
+
+U32 HalFcie_TimerStop(void)
+{
+	tick_stop = HalFcie_TimerGetTick();
+	return ((tick_stop - tick_start) / 12);
+}
+
+#endif
+
+static int CDZ_option = 0;
+static int CdzGpioBank = 0;
+static int CdzGpioOffset = 0;
+static int CdzGpioBits = 0;
+
+static int pwr_option = 0;
+static int pwrGpioBank = 0;
+static int pwrGpioOffset = 0;
+static int pwrGpioBits = 0;
+
+static int wp_option = 0;
+static int wpGpioBank = 0;
+static int wpGpioOffset = 0;
+static int wpGpioBits = 0;
+
+#define	SBOOT_SIGNATURE		0x3800
+
+#define CD_ALWAYS_REMOVE	0
+#define CD_INSERT_L			1
+#define CD_INSERT_H			2
+#define CD_ALWAYS_INSERT	3
+
+#define PC_ALWAYS_ON		0
+#define PC_POWERON_L		1
+#define PC_POWERON_H		2
+
+#define WP_PROTECT_L		1
+#define WP_PROTECT_H		2
+
+#define BITNUM(X)  (X&0x00000001? 0:X&0x00000002? 1:X&0x00000004? 2:X&0x00000008? 3: \
+					X&0x00000010? 4:X&0x00000020? 5:X&0x00000040? 6:X&0x00000080? 7: \
+					X&0x00000100? 8:X&0x00000200? 9:X&0x00000400?10:X&0x00000800?11: \
+					X&0x00001000?12:X&0x00002000?13:X&0x00004000?14:X&0x00008000?15: \
+					X&0x00010000?16:X&0x00020000?17:X&0x00040000?18:X&0x00080000?19: \
+					X&0x00100000?20:X&0x00200000?21:X&0x00400000?22:X&0x00800000?23: \
+					X&0x01000000?24:X&0x02000000?25:X&0x04000000?26:X&0x08000000?27: \
+					X&0x10000000?28:X&0x20000000?29:X&0x40000000?30:X&0x80000000?31:3697)
+
+
+void HalFcie_GetSBootGPIOConfig(void)
+{
+	if ((FCIE_RIU_R16(FCIE_ZDEC_CTL0) & 0xff00)==SBOOT_SIGNATURE)
+	{
+		FCIE_RIU_W16(FCIE_SD_CTRL, 0x0080); // enable register access
+		
+              SdPadMode=(FCIE_RIU_R16(WP_GPIO_BITS) >> 4 ) & 0x0f; 
+			  	
+		///////////////////////////////////////////////////////////////////////////////////////////
+		// card detection
+		CDZ_option=(FCIE_RIU_R16(FCIE_TEST_MODE) >> 8) & 0x3;
+		if( (CDZ_option==CD_INSERT_L) || (CDZ_option==CD_INSERT_H) )
+		{
+			CdzGpioBank = FCIE_RIU_R16(CDZ_GPIO_BANK);
+			CdzGpioOffset = FCIE_RIU_R16(CDZ_GPIO_OFFSET);
+			CdzGpioBits=CdzGpioOffset &0xff;
+			CdzGpioOffset=CdzGpioOffset >> 8;
+			
+		}
+		///////////////////////////////////////////////////////////////////////////////////////////
+		// power control
+		pwr_option=(FCIE_RIU_R16(FCIE_TEST_MODE) >> 10) & 0x3;
+		if( (pwr_option==PC_POWERON_L) || (pwr_option==PC_POWERON_H) )
+		{
+			pwrGpioBank=FCIE_RIU_R16(PWR_GPIO_BANK);
+			pwrGpioOffset=FCIE_RIU_R16(PWR_GPIO_OFFSET);
+			pwrGpioBits=pwrGpioOffset &0xff;
+			pwrGpioOffset=pwrGpioOffset >> 8;
+		}
+		else
+		{
+			pwr_option = PC_ALWAYS_ON; // always power on
+		}
+		///////////////////////////////////////////////////////////////////////////////////////////
+		// write protection
+		wp_option = (FCIE_RIU_R16(FCIE_TEST_MODE) >> 12) & 0x3;
+		if( (wp_option==WP_PROTECT_L) || (wp_option==WP_PROTECT_H) )
+		{
+			wpGpioBank=FCIE_RIU_R16(WP_GPIO_BANK);
+			wpGpioOffset=FCIE_RIU_R16(FCIE_BOOT_CONFIG) >> 8;
+			wpGpioBits=1<< (FCIE_RIU_R16(WP_GPIO_BITS) & 0xF);
+		}
+		else
+		{
+			wp_option = 0; // ex: t-flash socket
+		}
+		///////////////////////////////////////////////////////////////////////////////////////////
+
+		FCIE_RIU_W16(FCIE_SD_CTRL, 0x0000); // disable register access
+
+		printk("FCIE-CD(%d) 0x%04Xh[%02Xh]#%d\n", CDZ_option, CdzGpioBank, CdzGpioOffset, BITNUM(CdzGpioBits));
+		printk("FCIE-PC(%d) 0x%04Xh[%02Xh]#%d\n", pwr_option, pwrGpioBank, pwrGpioOffset, BITNUM(pwrGpioBits));
+		printk("FCIE-WP(%d) 0x%04Xh[%02Xh]#%d\n", wp_option, wpGpioBank, wpGpioOffset, BITNUM(wpGpioBits));
+		printk("SdPadMode:%x\n",SdPadMode);
+	} // check signature
+	else
+	{
+		printk(LIGHT_CYAN"FCIE: no GPIO signature found\n"NONE);
+	}
+
+}
+
+S32 HalFcie_GetCardDetect(void)
+{
+	#if 0
+		// MST107B
+		FCIE_RIU_16_ON(REG_PMGPIO_07h, PMGPIO7_OEN); // oen = 0, input
+		if(FCIE_RIU_R16(REG_PMGPIO_07h)&PMGPIO7_IN)
+		{
+			return 0;
+		}
+		else
+		{
+			return 1;
+		}
+	#else
+
+		if(CDZ_option==CD_ALWAYS_REMOVE) // always remove, not run
+		{
+			return 0;
+		}
+		else if(CDZ_option==CD_INSERT_L) // insert low case
+		{
+			if( FCIE_RIU_R8( RIU_BANK_2_BASE(CdzGpioBank) + ((CdzGpioOffset&0xFE)<<1) + (CdzGpioOffset&0x01) ) & CdzGpioBits )
+				return 0;
+			else
+				return 1;
+		}
+		else if(CDZ_option==CD_INSERT_H) // insert high case
+		{
+			if( FCIE_RIU_R8( RIU_BANK_2_BASE(CdzGpioBank) + ((CdzGpioOffset&0xFE)<<1) + (CdzGpioOffset&0x01) ) & CdzGpioBits )
+				return 1;
+			else
+				return 0;
+		}
+		else // always insert case, ex: wifi module
+		{
+			return 1;
+		}
+
+	#endif
+
+}
+
+// 0: not write protect
+// 1: write protect
+S32 HalFcie_GetWriteProtect(void)
+{
+	#if 0
+		// MST107B
+		/*
+		reg_test_out_mode[2:0]		reg[101e24]#6 ~ #4 = 000b	12h
+		reg_ld_spi1_config[1:0]		reg[101e9c]#1 ~ #0 = 00b	4Eh
+		reg_ld_spi3_config[1:0]		reg[101e9c]#5 ~ #4 = 00b	4Eh
+		reg_dim_config				reg[101ef6]#0      = 0b		7Bh
+		reg_seconduartmode[1:0]		reg[101e05]#1 ~ #0 = 00b	02h #9~#8
+		reg_od2nduart[1:0]			reg[101ea9]#1 ~ #0 = 00b	54h #9~#8
+		reg_p1_enable[4]			reg[101ea4]#4      = 0b		52h
+		reg_usb30vctl_config[1:0]	reg[101e08]#5 ~ #4 = 00b	04h
+		reg_usb30vctl1_config[1:0]	reg[101e09]#1 ~ #0 = 00b    04h #9~#8
+		reg_allpad_in				reg[101ea1]#7      = 0b		50h #15
+		*/
+
+		FCIE_RIU_16_ON(REG_CHIPGPIO_02h, REG_GPIO4_OEN); // oen = 0, input
+
+		printk("REG_CHIPGPIO_02h = %04Xh\n", FCIE_RIU_R16(REG_CHIPGPIO_02h));
+
+		if(FCIE_RIU_R16(REG_CHIPGPIO_02h)&REG_GPIO4_IN)
+		{
+			printk("write protected\n");
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	#else
+		if(wp_option==WP_PROTECT_L) // protect low case
+		{
+			if( FCIE_RIU_R8( RIU_BANK_2_BASE(wpGpioBank) + ((wpGpioOffset&0xFE)<<1) + (wpGpioOffset&0x01) ) & wpGpioBits )
+			{
+				return 0;
+			}
+			else
+			{
+				printk("write protected\n");
+				return 1;
+			}
+		}
+		else if(wp_option==WP_PROTECT_H) // protect high case
+		{
+			if( FCIE_RIU_R8( RIU_BANK_2_BASE(wpGpioBank) + ((wpGpioOffset&0xFE)<<1) + (wpGpioOffset&0x01) ) & wpGpioBits )
+			{
+				printk("write protected\n");
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		else
+		{
+			return 0;
+		}
+	#endif
+}
+
+void HalFcie_SetCardPower(U8 u8OnOff)
+{
+	if (pwr_option==PC_POWERON_L) // output low to turn on power case
+	{
+		if (u8OnOff)
+			FCIE_RIU_8_OF( RIU_BANK_2_BASE(pwrGpioBank) + ((pwrGpioOffset&0xFE)<<1) + (pwrGpioOffset&0x01), pwrGpioBits);
+		else
+			FCIE_RIU_8_ON( RIU_BANK_2_BASE(pwrGpioBank) + ((pwrGpioOffset&0xFE)<<1) + (pwrGpioOffset&0x01), pwrGpioBits);
+	}
+	else if (pwr_option==PC_POWERON_H) // output high to turn on power case
+	{
+		if (u8OnOff)
+			FCIE_RIU_8_ON( RIU_BANK_2_BASE(pwrGpioBank) + ((pwrGpioOffset&0xFE)<<1) + (pwrGpioOffset&0x01), pwrGpioBits);
+		else
+			FCIE_RIU_8_OF( RIU_BANK_2_BASE(pwrGpioBank) + ((pwrGpioOffset&0xFE)<<1) + (pwrGpioOffset&0x01), pwrGpioBits);
+	}
+	else
+	{
+		// always power on case
+	}
+}
+

@@ -1,0 +1,8 @@
+config MSTAR_TEE_SHM
+
+tristate "TEE_SHM"
+
+help
+    MStar TEE_SHM driver function
+default y
+

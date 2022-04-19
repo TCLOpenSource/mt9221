@@ -1,0 +1,5 @@
+config HAS_LED
+	tristate "TV Status Led"
+	default n
+	help
+	    enable MStar tv status led driver.

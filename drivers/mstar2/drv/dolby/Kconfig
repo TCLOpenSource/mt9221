@@ -1,0 +1,29 @@
+config SUPPORT_DV
+bool "Support Dolby Vision"
+default n
+help
+    enable dolby vision
+
+config MSTAR_XC_HDR_1_4_0
+bool "XC HDR Support 1_4_0"
+default n
+help
+    enable MStar XC HDR Support 1_4_0
+
+config MSTAR_XC_HDR_1_4_2
+bool "XC HDR Support 1_4_2"
+default n
+help
+    enable MStar XC HDR Support 1_4_2
+
+config MSTAR_XC_HDR_1_5_1
+bool "XC HDR Support 1_5_1"
+default n
+help
+    enable MStar XC HDR Support 1_5_1
+
+config MSTAR_XC_HDR_1_6_1_1
+bool "XC HDR Support 1_6_1_1"
+default n
+help
+    enable MStar XC HDR Support 1_6_1_1

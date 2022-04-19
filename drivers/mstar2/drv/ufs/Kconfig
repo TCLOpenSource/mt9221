@@ -1,0 +1,25 @@
+config MSTAR_UFS
+	tristate "MSTAR UFS controller platform driver"
+	depends on SCSI && SCSI_DMA
+	
+	select SCSI_LOWLEVEL
+	select SCSI_UFSHCD
+	select SCSI_UFSHCD_PLATFORM
+  default n
+	help
+	  This selects the MSTAR specific additions to UFSHCD platform driver.
+	  UFS host on MSTAR needs some vendor specific configuration before
+	  accessing the hardware which includes PHY configuration and vendor
+	  specific registers.
+
+	  Select this if you have UFS controller on MSTAR chipset.
+	  If unsure, say N.
+
+config MSTAR_UFS_DEBUG
+	tristate "MSTAR UFS debugging"
+	depends on MSTAR_UFS
+
+  default n
+	help
+      If you are experiencing any problems with the UFS device, say
+        Y here.  This will result in _many_ additional debugging messages.

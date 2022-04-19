@@ -1,0 +1,15 @@
+config MSTAR_PCIE
+	bool "MSTAR_PCIE"
+	depends on PCI && (MSTAR_KANO||MSTAR_K6)
+	help
+	  Say Y here if you want the MStar PCIe host core. Select this if you are having a
+	  problem with PCI support and want to see more of what is going on.
+
+	  When in doubt, say N.
+
+config MSTAR_PCIE_DISABLE_DIRECT_MMIO
+	bool "Disable direct MMIO"
+	depends on MSTAR_PCIE && MSTAR_K6
+	default n
+	help
+	  Disable direct MMIO mode.

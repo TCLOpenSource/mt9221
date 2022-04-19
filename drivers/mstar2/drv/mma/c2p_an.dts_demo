@@ -1,0 +1,56 @@
+/dts-v1/;
+
+/ {
+	model = "Curry";
+	compatible = "arm,foundation-arm", "arm,curry";
+	interrupt-parent = <0x1>;
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+
+
+
+	buf_tag {
+/* heaptype：HEAP_TYPE_SYSTEM = 0, HEAP_TYPE_CMA=1, HEAP_TYPE_MAX=2  */
+		VDEC_FB0 {
+			heaptype = <0x1>;
+			miu = <0>;
+		};
+	XC_FB1 {
+		heaptype = <0>;
+		miu =<1>;
+	};
+	VDEC_ES {
+		heaptype = <1>;
+		miu = <0>;
+	};
+
+	};
+
+
+	dram_type {
+		dram_type = "NUMA";
+		miu_number = <2>;
+		miu0_range = <0x0 0x1234 0x1234 0x0>;
+		miu1_range = <0x4321 0x1234 0x0 0x0>;
+
+                  /*      dram_type = "UMA";
+                           asymmetric_dram = 1;
+                           wide_range = <0x0 0x1234 0x1 0x1234 >;
+                           narrow_range =<0x0 0x4321 0x0 0x5678>; //if not exit, the range is set 0.
+                  */
+
+	};
+
+
+	mpu_cma_info {
+
+		cma_size_in_miu0 = <0x0 0x1000>;
+		cma_size_in_miu1 = <0x0 0x1001>;
+
+
+		mpu_size_in_miu0 = <0x0 0x2000>;
+		mpu_size_in_miu1 = <0x0 0x2001>;
+	};
+
+
+};

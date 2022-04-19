@@ -1,0 +1,13 @@
+config MSTAR_PWM
+
+
+tristate "PWM"
+default n
+
+config MTKPVR_PWM
+
+bool "PVR_PWM"
+default n
+
+---help---
+Enable compilation option for driver PWM

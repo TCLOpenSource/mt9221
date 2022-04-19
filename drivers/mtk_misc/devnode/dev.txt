@@ -1,0 +1,32 @@
+# name                 type mode   uid  gid major minor
+dev                     d   755     0     0
+dev/eeprom_0            c   660     0     0  228    0
+dev/eeprom_3            c   660     0     0  227    0
+dev/eeprom_4            c   660     0     0  230    0
+dev/localdimming        c   660  1000  1000  186    0
+dev/mtal                c   660     0     0  241    0
+dev/mtal_system         c   660  1000  1000  241    0
+dev/mtal_media          c   660  1013  1026  241    0
+dev/cb                  c   660     0     0  241    8
+dev/cb_system           c   660  1000  1000  241    8
+dev/cb_media            c   660  1013  1026  241    8
+dev/cb2                 c   660     0     0  241   16
+dev/cli                 c   660     0  2000  241    4
+dev/log2usb             c   660     0     0  241   32
+dev/feeder              c   660     0     0  288    0
+dev/mtphoto             c   660  1000  1000  288   64
+dev/fbm_vbi             c   660     0     0  287   67
+dev/fbm_mpeg            c   660  1013  1000  287   69
+dev/fbm_feeder          c   640     0     0  287   78
+dev/fbm_feeder_mmp      c   660     0     0  287   79
+dev/fbm_venc            c   660  1046  1006  287  101
+dev/fbm_feeder2         c   640     0     0  287  106
+dev/fbm_mpeg2           c   660  1013  1000  287  108
+dev/fbm_pvr             c   640     0     0  287  109
+dev/fbm_shm_vbif        c   640     0     0  287  181
+dev/fbm_shm_thumbnail   c   640     0     0  287  184
+dev/fbm_shm_ssma        c   640     0     0  287  180
+dev/ttyMT3              c   640     0     0  204   19
+dev/citest 		c   640     0     0  126  255
+dev/cimodule_media0 	c   640     0     0  180  208
+dev/cimodule_command0 	c   640     0     0  180  192

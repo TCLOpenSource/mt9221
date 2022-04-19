@@ -1,0 +1,5 @@
+config REGULATOR_MTKTV
+    tristate "Meditak Regulator control"
+    depends on ARM_MTKTV_CPUFREQ
+    help
+        This driver provide cpu power control

@@ -1,0 +1,269 @@
+config MSTAR_GMAC
+select NET
+select NET_ETHERNET
+select MII
+select PACKET
+select USE_POLICY_FWD
+select INET
+select NETDEVICES
+
+tristate "GMAC"
+default n
+
+---help---
+Enable compilation option for driver GMAC
+
+if MSTAR_GMAC
+config MSTAR_GMAC_V3
+bool "GMAC V3"
+default n
+help
+    GMAC Experimental driver. K6, K6lite, K7 support
+
+if MSTAR_GMAC_V3
+choice
+    prompt "Kano Default Select PadMux"
+    default KANO_GMAC1_EPHY
+    depends on MSTAR_KANO
+
+config KANO_GMAC1_EPHY
+bool "GMAC1 + Internal EPHY"
+help
+    GMAC1 + Internal EPHY
+
+config KANO_GMAC1_GPHY
+bool "GMAC1 + external GPHY"
+help
+    GMAC1 + external GPHY
+
+config KANO_GMAC0_GPHY
+bool "GMAC0 + external GPHY"
+help
+    GMAC0 + external GPHY
+
+endchoice
+
+config KANO_GMAC0_GPHY_PHY_ADDR
+int "GMAC0 tO GPHY PHY address"
+default 0
+depends on MSTAR_KANO
+help
+    GMAC0 + external GPHY PHY address
+
+config KANO_GMAC1_EPHY_PHY_ADDR
+int "GMAC1 tO EPHY PHY address"
+default 0
+depends on MSTAR_KANO
+help
+    GMAC1 + Internal EPHY PHY address
+
+config KANO_GMAC1_GPHY_PHY_ADDR
+int "GMAC1 to GPHY PHY address"
+default 0
+depends on MSTAR_KANO
+help
+    GMAC1 + external GPHY PHY address
+
+choice
+    prompt "K7U Default Select PadMux"
+    default K7U_GMAC1_GPHY
+    depends on MSTAR_K7U
+
+config K7U_GMAC1_GPHY
+bool "GMAC1 + Internal GPHY"
+help
+    GMAC1 + Internal GPHY
+
+config K7U_GMAC1_PM
+bool "GMAC1 + external GPHY from PM"
+help
+    GMAC1 + external GPHY from PM
+
+config K7U_GMAC0_PM
+bool "GMAC0 + external GPHY from PM"
+help
+    GMAC0 + external GPHY from PM
+
+config K7U_GMAC0_CHIPTOP
+bool "GMAC0 + external GPHY from CHIPTOP"
+help
+    GMAC0 + external GPHY from CHIPTOP
+
+endchoice
+
+config GMAC0_CHIPTOP_PHY_ADDR
+int "GMAC0 tO CHIPTOP PHY address"
+default 1
+depends on MSTAR_K7U
+help
+    GMAC0 + external GPHY from CHIPTOP PHY address
+
+config GMAC0_PM_PHY_ADDR
+int "GMAC0 tO PM PHY address"
+default 0
+depends on MSTAR_K7U
+help
+    GMAC0 + external GPHY from PM PHY address
+
+config GMAC1_GPHY_PHY_ADDR
+int "GMAC1 to GPHY PHY address"
+default 0
+depends on MSTAR_K7U
+help
+    GMAC1 + Internal GPHY PHY address
+
+config GMAC1_PM_PHY_ADDR
+int "GMAC1 to PM PHY address"
+default 2
+depends on MSTAR_K7U
+help
+    GMAC1 + external GPHY from PM PHY address
+
+config GPHY_INIT_IN_SBOOT
+bool "Init GPHY in sboot"
+default n
+depends on MSTAR_K7U
+help
+    Move GPHY init to sboot for saving auto negotiation time
+
+config GMAC_GPHY_TO_EPHY
+bool "GPHY to EPHY mode"
+default n
+depends on MSTAR_K7U
+help
+    Change GPHY to EPHY mode with speed support 10/100
+
+choice
+    prompt "Select RX Method"
+    default GMAC_RX_DMA if MSTAR_K7U
+    default GMAC_RX_Memory_Copy
+
+config GMAC_RX_Memory_Copy
+bool "Memory_Copy"
+help
+    Use memcpy and additional RX buffer for RX callback function
+
+config GMAC_RX_DMA
+bool "DMA"
+help
+    GMAC Direct access Kernel Memory in RX callback function.
+    K6, K6lite, k7 can only use one MIU for kernel Memory.
+
+endchoice
+
+config GMAC_RX_NAPI
+bool "Enable RX_NAPI"
+default y
+help
+    Enable NAPI Method. Disable interrupt during heavy tracffic.
+
+if GMAC_RX_NAPI
+config GMAC_RX_NAPI_WEIGHT
+int "RX_NAPI_WEIGHT"
+default 64
+help
+    NAPI Weight
+
+config GMAC_RX_GRO
+bool "Enable RX_GRO"
+default y
+help
+    Enable Generic receive offload. Merge packet with same destination and source
+
+endif
+
+config GMAC_RX_DELAY_INTERRUPT
+bool "Enable RX Delay Interrupt"
+default y
+help
+    Enable RX Delay Interrupt. Reduce interrupt number.
+
+if GMAC_RX_DELAY_INTERRUPT
+config GMAC_DELAY_INTERRUPT_NUMBER
+int "Packet Threshold"
+default 64
+help
+    MAX 255
+
+config GMAC_DELAY_INTERRUPT_TIMEOUT
+int "Timeout"
+default 6
+help
+    MAX 255
+
+endif
+
+choice
+    prompt "Select TX Queue"
+    default GMAC_TX_DESC_MODE if MSTAR_K7U
+    default GMAC_TX_4_QUEUE
+
+config GMAC_TX_4_QUEUE
+bool "Default TX Queue"
+help
+    Use default TX Queue 4.
+
+config GMAC_NEW_TX_QUEUE_V3
+bool "Enable Additional New TX Queue"
+depends on MSTAR_K7U || MSTAR_K6 || MSTAR_C2P
+help
+    Enable New TX Queue. Larger TX Queue. Kayla support
+
+config GMAC_TX_DESC_MODE
+bool "Enable TX dexcriptor Mode"
+depends on MSTAR_K7U || MSTAR_C2P
+help
+    Enable TX dexcriptor Mode. Use DRAM for TX QUEUE.
+
+endchoice
+
+config GMAC_NEW_TX_QUEUE_THRESHOLD_V3
+int "New TX Queue Threshold"
+default 60
+depends on GMAC_NEW_TX_QUEUE_V3
+help
+    MAX 63
+
+endif
+
+config MSTAR_GMAC_V2
+bool "GMAC V2"
+default n
+depends on !MSTAR_GMAC_V3
+help
+    GMAC V2 architecture. Zero memcpy in RX, pre-allocate ring buffer
+
+config GMAC_SUPPLY_RNG
+bool "Supply to random number generator device"
+default n
+depends on !MSTAR_GMAC_V3
+help
+    Supply to random number generator device
+
+config GMAC_ETHERNET_ALBANY
+bool "Supply to internel PHY"
+default n
+depends on !MSTAR_GMAC_V3
+help
+    Supply to internel PHY
+
+config MSTAR_GMAC_HW_TX_CHECKSUM
+bool "Supply to hardware TX checksum"
+default n
+help
+    Supply to hardware TX checksum
+
+config MSTAR_GMAC_JUMBO_PACKET
+bool "Supply to jumbo packet"
+default n
+depends on !MSTAR_GMAC_V3
+help
+    Supply to jumbo packet
+
+config MSTAR_GMAC_RMII_DOWNGRADE_MODE
+bool "Supply GMAC to use external EPHY by RMII"
+default n
+depends on !MSTAR_GMAC_V3
+help
+    Supply to GMAC use external RMII EPHY
+endif

@@ -1,0 +1,238 @@
+config NOE
+    bool "Ethernet GMAC"
+    ---help---
+      This driver support gigabit ethernet family of adapters.
+
+if NOE
+
+config GPHY_INIT_IN_SBOOT
+bool "Init GPHY in sboot"
+default n
+depends on MSTAR_K7U
+help
+    Move GPHY init to sboot for saving auto negotiation time
+
+config GMAC_GPHY_TO_EPHY
+bool "GPHY to EPHY mode"
+default n
+depends on MSTAR_K7U
+help
+    Change GPHY to EPHY mode with speed support 10/100
+
+choice
+    prompt "GMAC1 is connected to"
+    depends on NOE
+    default GE1_GMII_AN_INTPHY
+
+#config  GE1_RGMII_ONE_EPHY
+#   bool "RGMII + 1 port EPHY"
+#    depends on !NOE_GE1_SGMII
+
+#config  GE1_RGMII_FORCE_1000
+#   bool "RGMII_FORCE_1000 (GigaSW, CPU)"
+#    depends on !NOE_GE1_SGMII
+
+#config  GE1_RGMII_AN
+#   bool "RGMII_AN (GigaPhy)"
+#    depends on !NOE_GE1_SGMII
+
+#config  GE1_SGMII_AN
+#   bool "SGMII_AN (GigaPhy)"
+#    depends on NOE_GE1_SGMII
+
+#config  GE1_RGMII_NONE
+#   bool "NONE (NO CONNECT)"
+
+config  GE1_GMII_AN_INTPHY
+    bool "GMII_AN (Internal GigaPhy)"
+
+config  GE1_GMII_AN_EXTPHY
+    bool "GMII_AN (External GigaPhy)"
+
+endchoice
+
+config  MAC_TO_GIGAPHY_MODE_ADDR
+    hex "GE1 Phy Address"
+    default 0x1 if GE1_GMII_AN_INTPHY
+    default 0x2 if GE1_GMII_AN_EXTPHY
+    depends on GE1_MII_AN || GE1_RGMII_AN || GE1_SGMII_AN || GE1_GMII_AN_INTPHY || GE1_GMII_AN_EXTPHY
+
+
+config  MAC_TO_GIGAPHY_MODE_ADDR
+    hex "Port5 Phy Address"
+    default 0x5
+    depends on P5_MAC_TO_PHY_MODE
+
+config NOE_GMAC2
+    bool "GMAC2 Support"
+    depends on NOE
+    default y
+
+config NOE_GMAC2_IN_PM_MODE
+    bool "Power Saving Support on GMAC2"
+    depends on (NOE_GMAC2 && (GE1_GMII_AN_INTPHY || GE1_RGMII_NONE))
+    default n if NOE_GMAC2
+
+choice
+    prompt "GMAC2 is connected to"
+    depends on NOE_GMAC2
+    default GE2_GMII_AN_EXTPHY
+
+#config  GE2_RGMII_FORCE_1000
+#   bool "RGMII_FORCE_1000 (GigaSW, CPU)"
+#    depends on NOE_GMAC2 && !NOE_GE2_SGMII
+
+#config  GE2_RGMII_AN
+#   bool "RGMII_AN (External GigaPhy)"
+#    depends on NOE_GMAC2 && !NOE_GE2_SGMII
+
+#config  GE2_INTERNAL_GPHY
+#   bool "RGMII_AN (Internal GigaPhy)"
+#    depends on NOE_GMAC2
+#   select LAN_WAN_SUPPORT
+
+#config  GE2_SGMII_AN
+#   bool "SGMII_AN (GigaPhy)"
+#    depends on NOE_GE2_SGMII
+
+#config  GE2_SGMII_FORCE_2500
+#   bool "SGMII_FORCE_2500 (GigaSW)"
+#    depends on NOE_GE2_SGMII
+
+
+config GE2_GMII_AN_EXTPHY
+    bool "GMII (External GigaPhy)"
+    depends on NOE_GMAC2
+
+endchoice
+
+
+config  MAC_TO_GIGAPHY_MODE_ADDR2
+    hex
+    default 0 if GE_RGMII_INTERNAL_P0_AN
+    default 4 if GE_RGMII_INTERNAL_P4_AN
+    default 1 if GE2_GMII_AN_EXTPHY
+    depends on GE_RGMII_INTERNAL_P0_AN || GE_RGMII_INTERNAL_P4_AN
+
+config  MAC_TO_GIGAPHY_MODE_ADDR2
+    hex "GE2 Phy Address"
+    default 0x1 if GE2_GMII_AN_EXTPHY
+    default 0x2 if NOE_GMAC2_IN_PM_MODE
+    depends on GE2_MII_AN || GE2_RGMII_AN || GE2_SGMII_AN || GE2_GMII_AN_EXTPHY
+
+
+#choice
+#    prompt "Network BottomHalves"
+#    depends on NOE
+#    default NOE_NETWORK_TASKLET_BH
+
+config NOE_NETWORK_TASKLET_BH
+#    bool "Tasklet"
+    bool
+    default n
+
+config NOE_NETWORK_WORKQUEUE_BH
+#    bool "Work Queue"
+    bool
+    default n
+
+config NOE_NAPI
+#    bool "NAPI"
+    bool
+    default y
+#endchoice
+
+#config NOE_SPECIAL_TAG
+#   bool "Special Tag (0x810x)"
+#   depends on NOE
+
+config NOE_CHECKSUM_OFFLOAD
+    bool
+    default y
+    depends on NOE
+
+#config NOE_HW_IOCOHERENT
+#    bool
+#   default n
+#   depends on NOE
+
+config NOE_HW_LRO
+#   bool "HW LRO"
+    bool
+    default y
+    depends on NOE
+
+config NOE_HW_VLAN_TX
+    bool
+    default y
+    depends on NOE
+    ---help---
+      Please disable HW_VLAN_TX if you need double vlan
+
+config NOE_HW_VLAN_RX
+    bool
+    default n
+    depends on NOE
+    ---help---
+      Please disable HW_VLAN_RX if you need double vlan
+
+config NOE_TSO
+    bool
+    default y
+    depends on NOE_HW_VLAN_TX
+
+config NOE_ETHTOOL
+    bool
+    default y if MII
+    depends on NOE
+
+config NOE_QDMA
+    #bool "Choose QDMA istead PDMA"
+    bool
+    default y
+    depends on NOE
+
+config NOE_QDMATX_QDMARX
+    bool
+    depends on NOE_QDMA
+
+config HW_SFQ
+    bool
+    depends on NOE_QDMA
+
+config  ESW_DOUBLE_VLAN_TAG
+    bool
+    default n
+
+config ETH_SKB_ALLOC_SELECT
+    bool
+    default y
+
+#choice
+#    prompt "SKB Allocation API Selection"
+#    depends on ETH_SKB_ALLOC_SELECT
+#    default ETH_SLAB_ALLOC_SKB
+
+config  ETH_SLAB_ALLOC_SKB
+    #bool "SLAB skb allocation"
+    bool
+    default y
+
+config  ETH_PAGE_ALLOC_SKB
+    #bool "Page skb allocation"
+    bool
+    default n
+
+#endchoice
+
+config NOE_TX_RX_INT_SEPARATION
+    bool "Interrupt Separation"
+    depends on MP_PLATFORM_INT_1_to_1_SPI
+    default n
+
+
+config NOE_FLUSH_MEM
+    bool
+    default n
+
+endif # NOE

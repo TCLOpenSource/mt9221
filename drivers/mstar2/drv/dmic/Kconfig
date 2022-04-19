@@ -1,0 +1,34 @@
+# drivers/mstar/drv/dmic/Kconfig
+
+menuconfig MSTAR_DMIC_DRIVER
+	tristate "Dmic Driver"
+	default n
+	depends on SND
+	select SND_SOC
+	help
+		MStar Dmic Driver.
+
+		Note!
+		Before enable "MStar Dmic Driver",
+		be remembered to enable "Linux ALSA Kernel Module" first,
+		and enable the required modules then.
+
+		[Device Driver]->[Sound card support]->[Advanced Linux Sound Architecture]->...
+
+if MSTAR_DMIC_DRIVER
+
+config MSTAR_DMIC_DRIVER_DRV
+	tristate "Dmic Driver - DRV Layer"
+	default y
+	depends on MSTAR_DMIC_DRIVER
+	help
+		MStar Dmic Driver - DRV Layer.
+
+config MSTAR_DMIC_DRIVER_HAL
+	tristate "Dmic Driver - HAL Layer"
+	default y
+	depends on MSTAR_DMIC_DRIVER_DRV
+	help
+		MStar Dmic Driver - HAL Layer.
+
+endif #MSTAR_DMIC_DRIVER

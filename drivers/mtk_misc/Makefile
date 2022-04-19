@@ -1,0 +1,11 @@
+obj-$(CONFIG_FUNCTION_TRACER) += met/
+obj-y += mtk_perf/
+obj-y += timestamp/
+obj-y += cb2/
+#obj-y += mtk-fusion/
+obj-m += devnode/
+obj-y += early_suspend/
+obj-y += log2usb/
+obj-y += export_symbol/
+obj-y += mm_debug/
+obj-y += hang_debug/

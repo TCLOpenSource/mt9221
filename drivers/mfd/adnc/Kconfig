@@ -1,0 +1,144 @@
+#
+# Multifunction miscellaneous devices
+#
+
+if HAS_IOMEM
+menu "Knowles IAxxx Multifunction device drivers"
+
+config MFD_IAXXX
+	tristate "Knowles IAxxx Audio Device"
+	select REGMAP
+	select MFD_CORE
+        help
+	  This is the MFD core driver for the Knowles IAxxx device
+
+config MFD_IA8X01
+	tristate "Knowles IA8X01 Audio Device"
+	select REGMAP
+	select MFD_CORE
+        help
+	  This is the MFD core driver
+          for the Knowles IA8X01 device.
+          To get IA8X01 platform compatible
+          images, enable it.
+
+
+endmenu
+endif
+
+if MFD_IAXXX
+# IAxxx bus interfaces
+config MFD_IAXXX_I2C
+	bool "I2C bus-interface"
+	select REGMAP_I2C
+	select MFD_IAXXX_DISABLE_RUNTIME_PM
+	depends on I2C
+	help
+	  Enable I2C Bus interface for IAXXX MFD driver
+	  Say Y if I2C support is needed for the IAXXX device
+
+config MFD_IAXXX_SPI
+	bool "SPI bus-interface"
+	select REGMAP_SPI
+	depends on SPI
+	help
+	  Enable SPI Bus interface for IAXXX MFD driver
+	  Say Y if SPI support is needed for the IAXXX device
+
+config MFD_IAXXX_SOUNDWIRE
+	bool "SoundWire bus-interface"
+	select REGMAP_SWR
+	select SOUNDWIRE_WCD_CTRL
+	depends on SOUNDWIRE
+	help
+	  Enable SoundWire Bus interface for IAXXX MFD driver
+	  Soundwire bus enable option
+
+config MFD_IAXXX_UART
+	bool "UART bus-interface"
+	help
+	  Enable UART Bus interface for
+          IAXXX MFD driver. Say Y if UART
+          support is needed for the IAXXX
+          device.
+
+config IAXXX_UART_HW_FLOW_CONTROL
+        bool "Enable HW Flow Control"
+        depends on MFD_IAXXX_UART
+        help
+         To enable RTS/CTS flow control mechanism.
+         Host RTS should be connected to chip CTS and
+         Host CTS to chip RTS. Enabling it requires 4-wired
+         UART connections.
+
+config IAXXX_UART_HS_BAUD
+        depends on MFD_IAXXX_UART
+        prompt "UART baud rate"
+        int
+        default 2000000
+        help
+          To set the baud rate of UART.
+          Supported baud rate range:
+          Min - 115200
+          Max - 2000000
+
+config MFD_IAXXX_TUNNEL_POLL
+	bool "Tunneling in polling mode"
+
+config MFD_IAXXX_ATHENS_FPGA
+        bool "Enable Athens FPGA changes"
+
+config MFD_IAXXX_REGMAP_FPGA
+        bool "Enable REGMAP FPGA changes"
+
+config MFD_IA8X01_AIS
+	bool "Knowles IA8X01 AIS"
+        help
+	  This configuration is to
+          enable AIS specific changes.
+          Enable this for AIS and
+          disable it for KN.
+
+config MFD_IAXXX_DISABLE_RUNTIME_PM
+	bool "Disable runtime pm"
+
+config MFD_IAXXX_ALSA_SPI_TNL_EN
+	bool "Enable ALSA based tunnel dev"
+	help
+	  Select this option in the
+	  configuration is to enable
+	  the alsa based tunnel pcm
+	  device.
+
+config MFD_IA8X01_AZ
+	bool "Knowles IA8X01 AZ"
+        help
+	  This configuration is to
+          enable Audio Zoom specific
+          changes.
+          Enable this for Audio Zoom.
+
+config IA8X01_WAKEUP_GPIO
+	bool "Knowles IA8X01 Wakeup GPIO"
+        help
+	  This configuration is to enable Wakeup GPIO.
+          Driver can wakeup the chip either by
+          SPI CS or Wakeup GPIO.
+          If wakeup GPIO is enabled in FW to wakeup chip then
+          enable this.
+
+config IAXXX_HSW_VER_STR
+	string "HSW version String to be displayed at runtime"
+
+config IAXXX_FW_VER_STR
+	string "FW version String to be displayed at runtime"
+
+config IA8X01_MULTI_DEVICE_SUPPORT
+	bool "Enable Multi-device Support"
+        help
+	  This configuration is to enable features for Multiple
+          ia8x01 support in the driver.
+	  This Config can be used for differentiation in device
+	  tree files, defconfig and drivers.
+
+endif

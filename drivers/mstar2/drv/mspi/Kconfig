@@ -1,0 +1,12 @@
+config MSTAR_MSPI
+tristate "MSPI"
+default n
+select SPI
+help
+Mstar MSPI master driver
+
+if MSTAR_MSPI
+config LOOPBACK_TEST
+   bool "mspi-loopback-test"
+    default n
+endif

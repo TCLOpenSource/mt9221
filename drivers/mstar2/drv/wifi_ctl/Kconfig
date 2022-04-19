@@ -1,0 +1,7 @@
+config MTK_WIFI_CONTROL
+
+tristate "Enable MTK WIFI / BT reset control"
+
+help
+    Enable MTK WIFI / BT reset control
+default n

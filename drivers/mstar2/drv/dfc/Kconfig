@@ -1,0 +1,7 @@
+config MSTAR_DFC
+
+tristate "MSTAR DFC"
+
+help
+    MStar DRAM frequency change
+default n

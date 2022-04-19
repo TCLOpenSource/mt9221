@@ -1,0 +1,7 @@
+
+config MSTAR_PROCESS_MONITOR
+	bool "Process Monitor Module"
+	default n
+	help
+		Monitor user process dynamicly
+

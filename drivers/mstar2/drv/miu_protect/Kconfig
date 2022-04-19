@@ -1,0 +1,10 @@
+#ifdef CONFIG_MP_MMA_ENABLE
+config MSTAR_MIUPROTECT
+bool  "MIU PROTECT"
+depends on CMA
+ 
+help
+    MStar CMA POOL driver function
+#endif
+
+    

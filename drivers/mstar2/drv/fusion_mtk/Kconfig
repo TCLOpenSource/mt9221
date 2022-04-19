@@ -1,0 +1,4 @@
+config MTK_FUSION_MTK
+	tristate "Fusion(MTK)"
+	---help---
+	  Fusion is the IPC API used by DirectFB and FusionSound.

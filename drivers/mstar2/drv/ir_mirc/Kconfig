@@ -1,0 +1,36 @@
+config MSTAR_IR_REFACTOR
+	tristate "Mstar IR Driver"
+	default y
+	help
+	  Mstar IR decoder driver function
+
+menu "Mstar IR Config"
+	depends on MSTAR_IR_REFACTOR
+
+config IR_DYNAMIC_CONFIG
+        depends on MIRC_INPUT_DEVICE
+	tristate "load ir config(header,protocol,keymap)"
+	default n
+
+config IR_CONFIG_PATH
+	depends on IR_DYNAMIC_CONFIG
+	string "path to ir config"
+	default "/config/ir_config.ini"
+	help
+	  Please set the path to ir_config.ini.
+
+config MIRC_INPUT_DEVICE
+	bool "IR Key send to input subsystem"
+	default y
+
+config IR_DISABLE_REPEAT
+	bool "Disable IR repeat key"
+	default n
+	help
+	  Set y to bypass repeat key
+
+if MIRC_INPUT_DEVICE
+source "drivers/mstar2/drv/ir_mirc/keymaps/Kconfig"
+endif
+
+endmenu

@@ -1,0 +1,6 @@
+config MSTAR_UTIL
+	tristate "MSTAR_UTIL"
+	default m
+	help
+    		enable MStar util driver.
+

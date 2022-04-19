@@ -1,0 +1,27 @@
+
+config MP_MZCCMDQ_HW
+    bool "HW MZC + CMDQ"
+    default n
+    select MP_MZCCMDQ_HYBRID_HW
+    help
+        HW MZC DRIVER
+config MP_MZCCMDQ_HW_INTERRUPT_MODE
+    bool "HW MZC + Interrupt mode"
+    default n
+    help
+        HW MZC interrupt mode
+config MP_ZRAM_PERFORMANCE
+    bool "zram performance"
+    default n
+    help
+        zram performance
+config MP_MZCCMDQ_HYBRID_HW
+    bool "MZC + LZO HYBRID MODE"
+    depends on MP_MZCCMDQ_HW
+    default n
+    help
+        zram hybrid compression
+config MP_MZCCMDQ_HW_SPLIT
+    bool "mzc 1.5"
+    depends on MP_MZCCMDQ_HW
+    default n

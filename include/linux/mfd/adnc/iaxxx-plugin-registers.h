@@ -1,0 +1,69 @@
+/*
+ * iaxxx-plugin-registers.h
+ *
+ * Copyright 2017 Knowles Corporation
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  General Public License for more details.
+ */
+
+#ifndef __IAXXX_PLUGIN_REGISTER_H__
+#define __IAXXX_PLUGIN_REGISTER_H__
+
+#include "iaxxx-register-defs-plugin-instance-header.h"
+
+#define IAXXX_PLUGIN_HDR_BLOCK_NUM   \
+	((IAXXX_PLUGIN_HDR_CREATE_BLOCK_1_ADDR - \
+	IAXXX_PLUGIN_HDR_CREATE_BLOCK_0_ADDR) / 4)
+
+#define IAXXX_PLUGIN_HDR_CREATE_BLOCK_ADDR(I) \
+	(IAXXX_PLUGIN_HDR_CREATE_BLOCK_0_ADDR + \
+	(4 * (I) * IAXXX_PLUGIN_HDR_BLOCK_NUM))
+
+#define IAXXX_PLUGIN_HDR_ENABLE_BLOCK_ADDR(I) \
+	(IAXXX_PLUGIN_HDR_ENABLE_BLOCK_0_ADDR + \
+	(4 * (I) * IAXXX_PLUGIN_HDR_BLOCK_NUM))
+
+#define IAXXX_PLUGIN_HDR_RESET_BLOCK_ADDR(I) \
+	(IAXXX_PLUGIN_HDR_RESET_BLOCK_0_ADDR + \
+	(4 * (I) * IAXXX_PLUGIN_HDR_BLOCK_NUM))
+
+#define IAXXX_PLUGIN_HDR_EVT_UPDATE_BLOCK_ADDR(I) \
+	(IAXXX_PLUGIN_HDR_EVT_UPDATE_BLOCK_0_ADDR + \
+	(4 * (I) * IAXXX_PLUGIN_HDR_BLOCK_NUM))
+
+#define IAXXX_PLUGIN_HDR_SET_PARAM_REQ_BLOCK_ADDR(I) \
+	(IAXXX_PLUGIN_HDR_SET_PARAM_REQ_BLOCK_0_ADDR + \
+	(4 * (I) * IAXXX_PLUGIN_HDR_BLOCK_NUM))
+
+#define IAXXX_PLUGIN_HDR_GET_PARAM_REQ_BLOCK_ADDR(I) \
+	(IAXXX_PLUGIN_HDR_GET_PARAM_REQ_BLOCK_0_ADDR + \
+	(4 * (I) * IAXXX_PLUGIN_HDR_BLOCK_NUM))
+
+#define IAXXX_PLUGIN_HDR_PARAM_BLK_CTRL_BLOCK_ADDR(I) \
+	(IAXXX_PLUGIN_HDR_PARAM_BLK_CTRL_BLOCK_0_ADDR + \
+	(4 * (I) * IAXXX_PLUGIN_HDR_BLOCK_NUM))
+
+#define IAXXX_PLUGIN_HDR_PARAM_BLK_HDR_BLOCK_ADDR(I) \
+	(IAXXX_PLUGIN_HDR_PARAM_BLK_ID_BLOCK_0_ADDR + \
+	(4 * (I) * IAXXX_PLUGIN_HDR_BLOCK_NUM))
+
+#define IAXXX_PLUGIN_HDR_PARAM_BLK_ADDR_BLOCK_ADDR(I) \
+	(IAXXX_PLUGIN_HDR_PARAM_BLK_ADDR_BLOCK_0_ADDR + \
+	(4 * (I) * IAXXX_PLUGIN_HDR_BLOCK_NUM))
+
+#define IAXXX_PLUGIN_HDR_ERROR_BLOCK_ADDR(I)   \
+	(IAXXX_PLUGIN_HDR_ERROR_BLOCK_0_ADDR + \
+	(4 * (I) * IAXXX_PLUGIN_HDR_BLOCK_NUM))
+
+#define IAXXX_PLUGIN_HDR_ERROR_INS_ID_BLOCK_ADDR(I)   \
+	(IAXXX_PLUGIN_HDR_ERROR_INS_ID_BLOCK_0_ADDR + \
+	(4 * (I) * IAXXX_PLUGIN_HDR_BLOCK_NUM))
+
+#endif /* __IAXXX_PLUGIN_REGISTER_H__ */

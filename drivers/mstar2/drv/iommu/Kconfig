@@ -1,0 +1,6 @@
+config MSTAR_IOMMU
+tristate "MSTAR_IOMMU"
+default n
+help
+    enable MStar smart card driver.
+

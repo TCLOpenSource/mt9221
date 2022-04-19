@@ -1,0 +1,7 @@
+Abnormal interrupt signal continuously
+??? In this case, system can still monitor the interrupt activity so we can simply use reference count to determine whether interrupt is abnormal or not.
+??? If the reference count is too many in a period of time, we can mask (disable) specific interrupt source and popup warning message when issue occurs.
+
+Flow chart:
+
+

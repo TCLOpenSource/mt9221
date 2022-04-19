@@ -1,0 +1,8 @@
+config MSTAR_PM
+
+bool "PM"
+
+select APM_EMULATION
+
+help
+    MStar PM driver function

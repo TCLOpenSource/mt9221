@@ -1,0 +1,13 @@
+config ARM_MTKTV_CPUFREQ
+    bool "Mediatek Dynamic Voltage and Frequency Scaling"
+    depends on CPU_FREQ
+    select PM_OPP
+    help
+        To enable or to disable Mediatek dynamic voltage and frequency scaling mechanism
+
+config ARM_MTKTV_CPUFREQ_CA
+    bool "Mediatek Dynamic Secure Voltage and Frequency Control"
+    depends on (ARM_MTKTV_CPUFREQ)
+    default n
+    help
+        To enable or to disable Mediatek dynamic voltage and frequency secure control

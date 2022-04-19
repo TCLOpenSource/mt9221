@@ -1,0 +1,25 @@
+#
+# Makefile for MStar GFLIP device drivers.
+CONFIG_MSTAR_CHIP_NAME := $(subst ",,$(CONFIG_MSTAR_CHIP_NAME))
+ifdef CONFIG_MSTAR_PROJECT_NAME
+    CONFIG_MSTAR_PROJECT_NAME := $(subst ",,$(CONFIG_MSTAR_PROJECT_NAME))
+endif
+
+
+# general options
+EXTRA_CFLAGS      +=  -Idrivers/mstar2/include
+EXTRA_CFLAGS      +=  -Idrivers/mstar2/drv/mspi/
+EXTRA_CFLAGS      +=  -Idrivers/mstar2/hal/common/mspi
+#EXTRA_CFLAGS      +=  -Idrivers/mstar2/hal/$(CONFIG_MSTAR_CHIP_NAME)/mspi/
+
+EXTRA_CFLAGS      +=  -DRED_LION
+
+# specific options
+EXTRA_CFLAGS      +=
+
+# files
+obj-$(CONFIG_MSTAR_MSPI)   += spi-mstar.o
+obj-$(CONFIG_MSTAR_QSPI)   += qpi-mstar.o
+obj-y	+=  mdrv_mspi.o
+#obj-y   += ../../hal/$(CONFIG_MSTAR_CHIP_NAME)/mspi/mhal_mspi.o
+obj-y   += ../../hal/common/mspi/mhal_mspi.o

@@ -1,0 +1,5 @@
+config SUPPORT_HDR10PLUS_REF
+bool "Support HDR10PLUS_REF version"
+default n
+help
+    enable HDR10PLUS_REF version

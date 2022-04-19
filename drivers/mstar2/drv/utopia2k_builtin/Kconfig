@@ -1,0 +1,6 @@
+config MSTAR_UTOPIA2K_BUILTIN
+
+bool "UTOPIA2K_BUILTIN"
+default n
+help
+    MStar Utopia2K related driver

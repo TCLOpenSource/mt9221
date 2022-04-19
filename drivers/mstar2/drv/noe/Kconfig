@@ -1,0 +1,14 @@
+if (MSTAR_K7U)
+menu "MStar Network Offload Engine"
+
+source "drivers/mstar2/drv/noe/eth/Kconfig"
+
+if NETFILTER
+config NOE_NAT_HW
+    bool "HW NAT support (Module Mode Only)"
+    depends on NOE
+source "drivers/mstar2/drv/noe/nat/hw_nat/Kconfig"
+endif   # if NETFILTER
+endmenu #"MStar Network Offload Engine"
+endif   # (MSTAR_K7U)
+

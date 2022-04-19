@@ -1,0 +1,6 @@
+config MP_PNL_STR_CUST
+bool "PNL_STR_CUST"
+default n
+---help---
+Enable Panel STR customerized power sequence
+

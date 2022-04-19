@@ -1,0 +1,78 @@
+menu "Mstar IR Keymap Select"
+    depends on MIRC_INPUT_DEVICE
+	config IR_KEYMAP_MSTAR_NEC
+		bool "Mstar NEC keymaps"
+		default y
+		help
+		Mstar nec keymap
+	config IR_KEYMAP_TCL_RCA
+		bool "TCL RCA keymaps"
+		default y
+		help
+		TCL RCA keymaps
+	config IR_KEYMAP_TCL
+		bool "TCL keymaps"
+		default y
+		help
+		TCL tv keymaps
+	config IR_KEYMAP_GOME_NEC
+		bool "GOME keymaps"
+		default y
+		help
+		GOME tv keymaps
+	config IR_KEYMAP_CHANGHONG
+		bool "Changhong IR keymaps"
+		default y
+		help
+		Changhong tv keymaps
+	config IR_KEYMAP_HISENSE
+		bool "Hisense IR keymaps"
+		default y
+		help
+		Hisense tv keymaps
+	config IR_KEYMAP_HAIER
+		bool "Haier IR keymaps"
+		default y
+		help
+		Haier tv keymaps
+	config IR_KEYMAP_KONKA
+		bool "Konka IR keymaps"
+		default y
+		help
+		Konka tv keymaps
+	config IR_KEYMAP_SKYWORTH
+		bool "Skyworth IR keymaps"
+		default y
+		help
+		Skyworth tv keymaps
+	config IR_KEYMAP_PANASONIC_7051
+		bool "Pnasonic 7051 IR keymaps"
+		default y
+		help
+		panasonic tv keymaps
+	config IR_KEYMAP_KATHREIN
+		bool "Kathrein RC6 MODE_6A IR keymaps"
+		default y
+		help
+		Kathrein tv keymaps
+	config IR_KEYMAP_RC5
+		bool "RC5 IR keymaps"
+		default y
+		help
+		RC5 tv keymaps
+	config IR_KEYMAP_METZ
+		bool "metz IR keymaps"
+		default y
+		help
+		metz tv keymaps
+	config IR_KEYMAP_SAMPO
+		bool "Sampo IR keymaps"
+		default y
+		help
+		Sampo tv keymaps
+    config IR_KEYMAP_BEKO_RC5
+        bool "Beko RC5 IR keymaps"
+        default y
+        help
+        Beko RC5 tv keymaps
+endmenu

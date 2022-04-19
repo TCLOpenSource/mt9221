@@ -1,0 +1,15 @@
+config MSTAR_LP_STANDBY
+
+bool "Support Mstar low power standby mode"
+
+help
+    Support Mstar low power standby mode
+default n
+
+config MSTAR_MIU_AUTO_STR
+
+bool "Support Mstar MIU auto str mode"
+
+help
+    Support Mstar MIU auto str mode
+default n

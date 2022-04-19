@@ -1,0 +1,5 @@
+config MSTAR_HW_SEM
+
+tristate "HW Sem"
+help
+    MStar IIC driver HW Sem function

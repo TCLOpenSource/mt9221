@@ -1,0 +1,11 @@
+config MSTAR_R2
+bool "R2"
+default n
+help
+    MStar R2 driver function
+
+if MSTAR_R2
+    config MSTAR_FRC_R2
+    bool "FRC R2"
+    default n
+endif
